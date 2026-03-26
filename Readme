@@ -1,0 +1,150 @@
+# 💸 Money Tracker
+
+A personal finance tracker powered by a Telegram bot. Log your daily transactions by simply chatting — no forms, no clicks.
+
+## ✨ Features
+
+- **Telegram Bot Input** — send transactions in natural text format
+- **Auto Categorization** — keyword-based category matching from your own category list
+- **Multi Wallet** — track BNI, BSI, BRI, Cash, or any wallet you define
+- **Family/Group** — share wallets and categories with family members
+- **Bot Commands** — check balances and daily transactions instantly
+- **Flexible Amount Format** — `30` → Rp 30.000, `5jt` → Rp 5.000.000
+
+## 🤖 Bot Usage
+
+**Log transactions:**
+```
+11/3
+makan siang 30 - bni
+gaji 5jt + bsi
+bensin 30 - cash
+```
+
+**Amount formats:**
+| Input | Result |
+|-------|--------|
+| `30` | Rp 30.000 |
+| `30rb` / `30k` | Rp 30.000 |
+| `30.5` | Rp 30.500 |
+| `5jt` / `5m` | Rp 5.000.000 |
+| `500perak` | Rp 500 |
+| `30600` | Rp 30.600 |
+
+**Commands:**
+```
+/saldo              → show all wallet balances
+/hari               → today's transactions
+/hari 26/3/2026     → transactions on specific date
+```
+
+## 🛠️ Tech Stack
+
+- **Bot & API** — PHP 8.3 + Slim Framework 4
+- **Database** — MySQL 8
+- **Infrastructure** — Docker
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Docker & Docker Compose
+- A Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
+- A public HTTPS URL for the webhook (e.g. [ngrok](https://ngrok.com) for local dev)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/money-tracker.git
+   cd money-tracker
+   ```
+
+2. **Copy and fill environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env`:
+   ```env
+   DB_NAME=money_tracker
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_WEBHOOK_SECRET=your_random_secret_here
+   ```
+
+3. **Start the database**
+   ```bash
+   docker compose -f docker-compose.dev.yml up -d db
+   ```
+
+4. **Run the schema**
+   ```bash
+   # Linux/Mac
+   docker compose -f docker-compose.dev.yml exec -T db mysql -u root money_tracker < db/init/01_schema.sql
+   
+   # Windows PowerShell
+   Get-Content db/init/01_schema.sql | docker compose -f docker-compose.dev.yml exec -T db mysql -u root money_tracker
+   ```
+
+5. **Install PHP dependencies**
+   ```bash
+   docker compose -f docker-compose.dev.yml up -d api
+   docker compose -f docker-compose.dev.yml exec api composer install
+   ```
+
+6. **Register Telegram webhook**
+   ```bash
+   curl "https://api.telegram.org/bot{YOUR_TOKEN}/setWebhook?url=https://your-public-url/webhook/telegram&secret_token=your_random_secret_here"
+   ```
+
+7. **Seed your data** — insert your user, wallets, and categories via MySQL client or CLI.
+
+### Project Structure
+
+```
+money-tracker/
+├── docker-compose.dev.yml
+├── docker-compose.prod.yml
+├── .env.example
+├── db/
+│   └── init/
+│       └── 01_schema.sql
+└── api/
+    ├── Dockerfile.dev
+    ├── composer.json
+    ├── public/
+    │   └── index.php
+    └── src/
+        ├── container.php
+        ├── Controllers/
+        │   └── TelegramController.php
+        ├── Database/
+        │   └── Connection.php
+        ├── Helpers/
+        │   └── Response.php
+        ├── Routes/
+        │   └── api.php
+        └── Services/
+            ├── CategoryMatcher.php
+            ├── TransactionParser.php
+            └── TransactionService.php
+```
+
+## 🗄️ Database Schema
+
+| Table | Description |
+|-------|-------------|
+| `users` | App users with Telegram ID |
+| `families` | Family/group with a master user |
+| `family_members` | Members per family (soft-kick via `kicked_at`) |
+| `wallets` | User wallets with balance tracking |
+| `categories` | Transaction categories (in/out/both) |
+| `transactions` | All transactions with wallet & category reference |
+
+## 🔒 Security
+
+- Telegram webhook validated via `X-Telegram-Bot-Api-Secret-Token` header
+- `.env` is git-ignored — never commit your tokens
+- Family data isolation — kicked members' data is hidden but not deleted
+
+## 📝 License
+
+MIT

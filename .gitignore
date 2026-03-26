@@ -1,0 +1,21 @@
+# Environment
+.env
+
+# PHP
+api/vendor/
+api/.php-cs-fixer.cache
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
