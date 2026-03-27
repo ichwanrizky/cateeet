@@ -70,7 +70,7 @@ class TransactionParser
             }
 
             // Parse transaksi biasa
-            if (preg_match('/^(.+?)\s+([\d.,]+(?:rb|k|jt|m|perak)?)\s*([+\-])\s*(\w+)$/i', $line, $m)) {
+            if (preg_match('/^(.+?)\s+([\d.,]+(?:rb|k|jt|m|perak)?)\s*([+\-])\s*(\w[\w\s]*?)(?:\s+#(\w+))?$/i', $line, $m)) {
                 $result[] = [
                     'description' => trim($m[1]),
                     'amount'      => $this->parseAmount($m[2]),
@@ -79,6 +79,7 @@ class TransactionParser
                     'date'        => $date,
                     'raw'         => $line,
                     'is_transfer' => false,
+                    'category_tag' => isset($m[5]) ? strtolower(trim($m[5])) : null,
                 ];
             }
         }

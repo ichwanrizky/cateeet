@@ -29,7 +29,7 @@ const steps = [
     description:
       "Daftar di aplikasi web ini, lalu update Telegram ID kamu di menu Telegram. Setelah terhubung, bot akan mengenali akunmu.",
     image: "/tutorial_bot/3.jpeg",
-    note: "Sebelum Telegram ID terhubung, bot akan membalas 'Akun kamu belum terdaftar'.",
+    note: "Sebelum Telegram ID terhubung, bot akan membalas pesan panduan registrasi beserta Telegram ID kamu.",
   },
   {
     number: 4,
@@ -50,20 +50,38 @@ const steps = [
   },
   {
     number: 6,
+    title: "Tentukan kategori manual",
+    description:
+      "Tambahkan #nama_kategori di akhir pesan untuk menentukan kategori secara manual. Bot akan mencocokkan dengan kategori yang sudah kamu buat.",
+    image: "/tutorial_bot/6.jpeg",
+    code: "coffee 50 - bni #jajan\nnasi padang 25 - cash #makan",
+    note: "Tanpa #tag, bot akan otomatis mendeteksi kategori dari deskripsi transaksi.",
+  },
+  {
+    number: 7,
+    title: "Nama wallet fleksibel",
+    description:
+      "Tidak perlu ketik nama wallet lengkap — cukup sebagian saja, bot akan mencocokkan otomatis.",
+    image: "/tutorial_bot/5.jpeg",
+    code: "bensin 50 - bni pol\ngaji 5jt + bsi sy",
+    note: "Contoh: 'bni pol' akan match ke wallet 'BNI Polibatam'.",
+  },
+  {
+    number: 8,
     title: "Transfer antar wallet — format ke / -",
     description: "Pindahkan dana antar wallet dengan format tf atau transfer.",
     image: "/tutorial_bot/9.jpeg",
     code: "tf 10 bni - cash\ntf 10rb bni ke cash",
   },
   {
-    number: 7,
+    number: 9,
     title: "Transfer antar wallet — format spasi",
     description: "Bisa juga tanpa pemisah, langsung nama wallet tujuan.",
     image: "/tutorial_bot/10.jpeg",
     code: "tf 10rb bni cash",
   },
   {
-    number: 8,
+    number: 10,
     title: "Transfer dengan biaya admin",
     description: "Tambahkan biaya admin di akhir pesan.",
     image: "/tutorial_bot/11.jpeg",
@@ -71,7 +89,7 @@ const steps = [
     note: "2500 = Rp 2.500 (bukan Rp 2.500.000). Biaya admin dipotong dari wallet asal.",
   },
   {
-    number: 9,
+    number: 11,
     title: "Cek transaksi harian",
     description:
       "Kirim /hari untuk melihat semua transaksi hari ini. Transaksi transfer ditandai 🔄 dan tidak dihitung di total.",
@@ -79,7 +97,7 @@ const steps = [
     code: "/hari\n/hari 25/3/2026",
   },
   {
-    number: 10,
+    number: 12,
     title: "Cek saldo wallet",
     description:
       "Kirim /saldo untuk melihat saldo semua wallet kamu beserta total keseluruhan.",
@@ -106,7 +124,7 @@ export default function TutorialPublicPage() {
       {/* Header */}
       <header className="border-b bg-card sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="font-semibold">💸 Money Tracker</span>
+          <span className="font-semibold">💸 Cateeet</span>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link href="/login">
@@ -125,7 +143,7 @@ export default function TutorialPublicPage() {
         <div>
           <h1 className="text-2xl font-semibold">Tutorial Penggunaan Bot</h1>
           <p className="text-sm text-muted-foreground">
-            Panduan lengkap cara menggunakan Money Tracker via Telegram
+            Panduan lengkap cara menggunakan Cateeet via Telegram
           </p>
         </div>
 
@@ -138,7 +156,7 @@ export default function TutorialPublicPage() {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Money Tracker bukan cuma untuk pribadi — kamu bisa membuat{" "}
+            Cateeet bukan cuma untuk pribadi — kamu bisa membuat{" "}
             <strong>grup keluarga</strong> dan mencatat keuangan bersama. Suami
             istri, orang tua dan anak, atau siapa saja bisa bergabung dalam satu
             grup dan melihat transaksi satu sama lain secara real-time.
@@ -210,6 +228,11 @@ export default function TutorialPublicPage() {
               </p>
               <p>bensin 30 - cash</p>
               <p>freelance 500rb + bni</p>
+            </div>
+            <div className="rounded-md bg-muted px-4 py-3 font-mono text-sm space-y-1">
+              <p className="text-muted-foreground"># Dengan kategori manual</p>
+              <p>coffee 50 - bni #jajan</p>
+              <p>nasi padang 25 - cash #makan</p>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded-md border px-3 py-2">
@@ -288,6 +311,8 @@ export default function TutorialPublicPage() {
           <CardContent>
             <div className="space-y-2">
               {[
+                { cmd: "/start", desc: "Mulai bot & lihat panduan singkat" },
+                { cmd: "/help", desc: "Panduan format transaksi lengkap" },
                 { cmd: "/saldo", desc: "Lihat semua saldo wallet" },
                 { cmd: "/hari", desc: "Transaksi hari ini" },
                 { cmd: "/hari 26/3/2026", desc: "Transaksi tanggal tertentu" },
@@ -310,7 +335,7 @@ export default function TutorialPublicPage() {
         <div className="rounded-lg border bg-card p-6 text-center space-y-3">
           <p className="font-semibold">Siap mulai mencatat keuangan?</p>
           <p className="text-sm text-muted-foreground">
-            Daftar sekarang dan mulai gunakan Money Tracker bot.
+            Daftar sekarang dan mulai gunakan Cateeet bot.
           </p>
           <div className="flex gap-2 justify-center">
             <Link href="/register">
@@ -325,8 +350,9 @@ export default function TutorialPublicPage() {
 
       {/* Footer */}
       <footer className="border-t py-4 text-center text-xs text-muted-foreground mt-8">
-        Developed by <span className="font-medium text-foreground">Waaang</span>{" "}
-        · {new Date().getFullYear()}
+        Developed by{" "}
+        <span className="font-medium text-foreground">Ichwan Rizky</span> ·{" "}
+        {new Date().getFullYear()}
       </footer>
 
       {/* Lightbox */}

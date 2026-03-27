@@ -62,44 +62,40 @@ class TransactionService
                 'wallet'  => $wallet['name'],
                 'balance' => $this->getWalletBalance($wallet['id']),
             ];
-
         } catch (\Exception $e) {
             $this->db->rollback();
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
-    private function findWallet(int $userId, string $walletName): ?array
+    private function findWallet(int $userId, string $name): ?array
     {
-        // Cari wallet milik user
+        // Exact match dulu
         $stmt = $this->db->prepare("
-            SELECT id, name, current_balance 
-            FROM wallets 
-            WHERE user_id = ? AND LOWER(name) = LOWER(?)
-        ");
-        $stmt->bind_param('is', $userId, $walletName);
+        SELECT id, name, current_balance 
+        FROM wallets 
+        WHERE user_id = ? AND LOWER(name) = LOWER(?)
+        LIMIT 1
+    ");
+        $stmt->bind_param('is', $userId, $name);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $wallet = $result->fetch_assoc();
-
+        $wallet = $stmt->get_result()->fetch_assoc();
         if ($wallet) return $wallet;
 
-        // Cari wallet family yang di-share
+        // Partial match — nama wallet mengandung keyword atau keyword mengandung nama wallet
         $stmt = $this->db->prepare("
-            SELECT w.id, w.name, w.current_balance
-            FROM wallets w
-            JOIN family_members fm ON fm.user_id = w.user_id
-            JOIN family_members fm2 ON fm2.family_id = fm.family_id
-            WHERE fm2.user_id = ?
-              AND LOWER(w.name) = LOWER(?)
-              AND w.shared_to_family = 1
-              AND fm.kicked_at IS NULL
-              AND fm2.kicked_at IS NULL
-        ");
-        $stmt->bind_param('is', $userId, $walletName);
+        SELECT id, name, current_balance 
+        FROM wallets 
+        WHERE user_id = ? AND (
+            LOWER(name) LIKE LOWER(?) OR
+            LOWER(?) LIKE CONCAT('%', LOWER(name), '%')
+        )
+        LIMIT 1
+    ");
+        $search = "%{$name}%";
+        $stmt->bind_param('iss', $userId, $search, $name);
         $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc() ?: null;
+        return $stmt->get_result()->fetch_assoc() ?: null;
     }
 
     private function getWalletBalance(int $walletId): float

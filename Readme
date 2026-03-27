@@ -1,19 +1,26 @@
-# 💸 Money Tracker
+# 💸 Cateeeet
 
-A personal finance tracker powered by a Telegram bot. Log your daily transactions by simply chatting — no forms, no clicks.
+Aplikasi pencatat keuangan pribadi berbasis Telegram bot. Catat transaksi harian cukup dengan chat — tanpa form, tanpa klik.
 
-## ✨ Features
+🌐 **Live:** [cateeet.cloud](https://cateeet.cloud)
 
-- **Telegram Bot Input** — send transactions in natural text format
-- **Auto Categorization** — keyword-based category matching from your own category list
-- **Multi Wallet** — track BNI, BSI, BRI, Cash, or any wallet you define
-- **Family/Group** — share wallets and categories with family members
-- **Bot Commands** — check balances and daily transactions instantly
-- **Flexible Amount Format** — `30` → Rp 30.000, `5jt` → Rp 5.000.000
+## ✨ Fitur
 
-## 🤖 Bot Usage
+- **Telegram Bot Input** — catat transaksi dengan format teks natural
+- **Auto Kategorisasi** — pencocokan kategori otomatis dari daftar kategori milikmu
+- **Kategori Manual via #tag** — tambahkan `#nama_kategori` di akhir pesan untuk memilih kategori secara manual
+- **Nama Wallet Fleksibel** — cukup ketik sebagian nama wallet, bot akan mencocokkan otomatis
+- **Multi Wallet** — kelola BNI, BSI, BRI, Cash, atau wallet apapun yang kamu definisikan
+- **Transfer Antar Wallet** — pindah dana antar wallet, dengan atau tanpa biaya admin
+- **Family/Group** — share wallet dan lihat transaksi bareng anggota keluarga
+- **Bot Commands** — cek saldo dan transaksi harian langsung dari Telegram
+- **Format Nominal Fleksibel** — `30` → Rp 30.000, `5jt` → Rp 5.000.000
+- **Dashboard Web** — kelola transaksi, wallet, kategori, dan family via browser
+- **Pagination & Filter Bulan** — navigasi transaksi per bulan dengan mudah
 
-**Log transactions:**
+## 🤖 Penggunaan Bot
+
+**Catat transaksi:**
 ```
 11/3
 makan siang 30 - bni
@@ -21,7 +28,27 @@ gaji 5jt + bsi
 bensin 30 - cash
 ```
 
-**Amount formats:**
+**Dengan kategori manual (#tag):**
+```
+coffee 50 - bni #jajan
+nasi padang 25 - cash #makan
+```
+
+**Nama wallet fleksibel:**
+```
+bensin 50 - bni pol     → match ke 'BNI Polibatam'
+gaji 5jt + bsi sy       → match ke 'BSI Syariah'
+```
+
+**Transfer antar wallet:**
+```
+tf 50rb bni ke cash
+tf 50rb bni - cash
+tf 50rb bni cash
+tf 50rb bni cash 2500   ← dengan biaya admin Rp 2.500
+```
+
+**Format nominal:**
 | Input | Result |
 |-------|--------|
 | `30` | Rp 30.000 |
@@ -29,121 +56,199 @@ bensin 30 - cash
 | `30.5` | Rp 30.500 |
 | `5jt` / `5m` | Rp 5.000.000 |
 | `500perak` | Rp 500 |
-| `30600` | Rp 30.600 |
+| `30600` | Rp 30.600 (literal) |
 
 **Commands:**
 ```
-/saldo              → show all wallet balances
-/hari               → today's transactions
-/hari 26/3/2026     → transactions on specific date
+/start              → info & panduan singkat
+/help               → panduan lengkap
+/saldo              → lihat semua saldo wallet
+/hari               → transaksi hari ini
+/hari 26/3/2026     → transaksi tanggal tertentu
 ```
 
 ## 🛠️ Tech Stack
 
-- **Bot & API** — PHP 8.3 + Slim Framework 4
+- **Frontend** — Next.js 16, React 19, TypeScript, shadcn/ui, Tailwind CSS, NextAuth v4
+- **Backend/API** — PHP 8.3 + Slim Framework 4, OCI8/MySQLi
 - **Database** — MySQL 8
-- **Infrastructure** — Docker
+- **Infrastructure** — Docker, Nginx
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Docker & Docker Compose
-- A Telegram Bot Token (from [@BotFather](https://t.me/BotFather))
-- A public HTTPS URL for the webhook (e.g. [ngrok](https://ngrok.com) for local dev)
+- Node.js 20+
+- Telegram Bot Token (dari [@BotFather](https://t.me/BotFather))
+- URL publik HTTPS untuk webhook (misal [ngrok](https://ngrok.com) untuk dev lokal)
 
-### Installation
+### Development
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/money-tracker.git
-   cd money-tracker
-   ```
+1. **Clone repository**
+```bash
+   git clone https://github.com/yourusername/cateeeet.git
+   cd cateeeet
+```
 
-2. **Copy and fill environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env`:
-   ```env
+2. **Buat file environment**
+
+   Root `.env`:
+```env
    DB_NAME=money_tracker
+   APP_DEBUG=true
    TELEGRAM_BOT_TOKEN=your_bot_token_here
    TELEGRAM_WEBHOOK_SECRET=your_random_secret_here
-   ```
-
-3. **Start the database**
-   ```bash
-   docker compose -f docker-compose.dev.yml up -d db
-   ```
-
-4. **Run the schema**
-   ```bash
-   # Linux/Mac
-   docker compose -f docker-compose.dev.yml exec -T db mysql -u root money_tracker < db/init/01_schema.sql
-   
-   # Windows PowerShell
-   Get-Content db/init/01_schema.sql | docker compose -f docker-compose.dev.yml exec -T db mysql -u root money_tracker
-   ```
-
-5. **Install PHP dependencies**
-   ```bash
-   docker compose -f docker-compose.dev.yml up -d api
-   docker compose -f docker-compose.dev.yml exec api composer install
-   ```
-
-6. **Register Telegram webhook**
-   ```bash
-   curl "https://api.telegram.org/bot{YOUR_TOKEN}/setWebhook?url=https://your-public-url/webhook/telegram&secret_token=your_random_secret_here"
-   ```
-
-7. **Seed your data** — insert your user, wallets, and categories via MySQL client or CLI.
-
-### Project Structure
-
+   JWT_SECRET=your_jwt_secret_here
 ```
-money-tracker/
+
+   `frontend/.env.local`:
+```env
+   API_URL=http://localhost:8000
+   NEXT_PUBLIC_API_URL=http://localhost:3000
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your_nextauth_secret_here
+   JWT_SECRET=your_jwt_secret_here
+```
+
+3. **Jalankan database & API**
+```bash
+   docker compose -f docker-compose.dev.yml up -d
+```
+
+4. **Jalankan frontend**
+```bash
+   cd frontend
+   npm install
+   npm run dev
+```
+
+5. **Register Telegram webhook**
+```bash
+   curl "https://api.telegram.org/bot{YOUR_TOKEN}/setWebhook?url=https://your-public-url/webhook/telegram&secret_token=your_secret_here"
+```
+
+### Production
+
+1. **Buat file environment**
+
+   Root `.env`:
+```env
+   DB_NAME=cateeeet
+   DB_ROOT_PASSWORD=your_root_password
+   DB_USER=cateeeet_user
+   DB_PASSWORD=your_db_password
+   APP_DEBUG=false
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_WEBHOOK_SECRET=your_secret_here
+   JWT_SECRET=your_jwt_secret_here
+   NEXTAUTH_URL=https://yourdomain.com
+   NEXTAUTH_SECRET=your_nextauth_secret_here
+   API_URL=http://api:8000
+   NEXT_PUBLIC_API_URL=https://yourdomain.com
+```
+
+   `frontend/.env.local`:
+```env
+   API_URL=http://api:8000
+   NEXT_PUBLIC_API_URL=https://yourdomain.com
+   NEXTAUTH_URL=https://yourdomain.com
+   NEXTAUTH_SECRET=your_nextauth_secret_here
+   JWT_SECRET=your_jwt_secret_here
+```
+
+2. **Build & jalankan**
+```bash
+   docker compose -f docker-compose.prod.yml up -d --build
+```
+
+3. **Setup Nginx** — arahkan domain ke port frontend (3000) dan API (8000)
+
+4. **SSL dengan Certbot**
+```bash
+   sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+### Struktur Project
+```
+cateeeet/
 ├── docker-compose.dev.yml
 ├── docker-compose.prod.yml
 ├── .env.example
 ├── db/
 │   └── init/
 │       └── 01_schema.sql
-└── api/
-    ├── Dockerfile.dev
-    ├── composer.json
-    ├── public/
-    │   └── index.php
-    └── src/
-        ├── container.php
-        ├── Controllers/
-        │   └── TelegramController.php
-        ├── Database/
-        │   └── Connection.php
-        ├── Helpers/
-        │   └── Response.php
-        ├── Routes/
-        │   └── api.php
-        └── Services/
-            ├── CategoryMatcher.php
-            ├── TransactionParser.php
-            └── TransactionService.php
+├── api/
+│   ├── Dockerfile.dev
+│   ├── Dockerfile.prod
+│   ├── composer.json
+│   ├── public/
+│   │   └── index.php
+│   └── src/
+│       ├── container.php
+│       ├── Controllers/
+│       │   ├── AuthController.php
+│       │   ├── TelegramController.php
+│       │   ├── TransactionController.php
+│       │   ├── WalletController.php
+│       │   ├── CategoryController.php
+│       │   └── FamilyController.php
+│       ├── Database/
+│       │   └── Connection.php
+│       ├── Helpers/
+│       │   └── Response.php
+│       ├── Middleware/
+│       │   └── JwtMiddleware.php
+│       ├── Routes/
+│       │   └── api.php
+│       └── Services/
+│           ├── CategoryMatcher.php
+│           ├── TransactionParser.php
+│           └── TransactionService.php
+└── frontend/
+    ├── Dockerfile.prod
+    ├── src/
+    │   ├── app/
+    │   │   ├── (auth)/
+    │   │   │   ├── login/
+    │   │   │   ├── register/
+    │   │   │   └── logout/
+    │   │   ├── (dashboard)/
+    │   │   │   ├── transactions/
+    │   │   │   ├── wallets/
+    │   │   │   ├── categories/
+    │   │   │   ├── family/
+    │   │   │   ├── telegram/
+    │   │   │   ├── profile/
+    │   │   │   └── tutorial/
+    │   │   ├── tutorial_public/
+    │   │   └── api/auth/[...nextauth]/
+    │   ├── components/
+    │   └── middleware.ts
+    └── public/
+        ├── tutorial_bot/
+        └── tutorial_botid/
 ```
 
-## 🗄️ Database Schema
+## 🗄️ Skema Database
 
-| Table | Description |
-|-------|-------------|
-| `users` | App users with Telegram ID |
-| `families` | Family/group with a master user |
-| `family_members` | Members per family (soft-kick via `kicked_at`) |
-| `wallets` | User wallets with balance tracking |
-| `categories` | Transaction categories (in/out/both) |
-| `transactions` | All transactions with wallet & category reference |
+| Table | Deskripsi |
+|-------|-----------|
+| `users` | User aplikasi dengan Telegram ID |
+| `families` | Grup keluarga dengan master user |
+| `family_members` | Anggota per keluarga (soft-kick via `kicked_at`) |
+| `wallets` | Wallet user dengan tracking saldo |
+| `categories` | Kategori transaksi (in/out/both), bisa di-share ke family |
+| `transactions` | Semua transaksi dengan referensi wallet & kategori, flag `is_transfer` |
 
-## 🔒 Security
+## 🔒 Keamanan
 
-- Telegram webhook validated via `X-Telegram-Bot-Api-Secret-Token` header
-- `.env` is git-ignored — never commit your tokens
-- Family data isolation — kicked members' data is hidden but not deleted
+- Webhook Telegram divalidasi via header `X-Telegram-Bot-Api-Secret-Token`
+- JWT HS256 untuk autentikasi API, expire 1 jam 10 menit
+- NextAuth session expire 1 jam
+- Verifikasi Telegram ID via kirim pesan ke bot sebelum disimpan
+- `.env` di-gitignore — jangan commit token kamu
+- Isolasi data family — data anggota yang di-kick tersembunyi tapi tidak dihapus
+- Port DB & service hanya expose ke `127.0.0.1` di production
 
 ## 📝 License
 

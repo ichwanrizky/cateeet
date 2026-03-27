@@ -151,4 +151,22 @@ class CategoryMatcher
         }
         return $categories;
     }
+
+    public function matchByTag(int $userId, string $tag): array
+    {
+        // Cari kategori by nama
+        $stmt = $this->db->prepare("
+        SELECT id, name, icon FROM categories
+        WHERE user_id = ? AND LOWER(name) LIKE LOWER(?)
+        LIMIT 1
+    ");
+        $search = "%{$tag}%";
+        $stmt->bind_param('is', $userId, $search);
+        $stmt->execute();
+        $cat = $stmt->get_result()->fetch_assoc();
+        if ($cat) return $cat;
+
+        // Fallback ke match biasa
+        return $this->match($userId, $tag, 'out');
+    }
 }

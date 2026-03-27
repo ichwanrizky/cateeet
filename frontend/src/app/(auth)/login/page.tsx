@@ -57,7 +57,7 @@ export default function LoginPage() {
               💸 Cateeet
             </h1>
             <p className="text-sm text-muted-foreground">
-              Cateeeet, biar gak lupa!
+              Cateeet, biar gak lupa!
             </p>
           </div>
 

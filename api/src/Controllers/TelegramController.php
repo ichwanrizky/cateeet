@@ -39,15 +39,16 @@ class TelegramController
 
         $user = $this->getUserByTelegramId($chatId);
         if (!$user) {
-            $this->sendMessage($chatId,
+            $this->sendMessage(
+                $chatId,
                 "👋 Halo! Kamu belum terdaftar di Cateeeet.\n\n" .
-                "Cara daftar:\n" .
-                "1. Buka aplikasi web Cateeeet\n" .
-                "2. Daftar akun baru\n" .
-                "3. Masuk ke menu *Telegram*\n" .
-                "4. Masukkan Telegram ID kamu: `{$chatId}`\n\n" .
-                "Telegram ID kamu: *{$chatId}*\n\n" .
-                "Ketik /start untuk info lebih lanjut."
+                    "Cara daftar:\n" .
+                    "1. Buka aplikasi web Cateeeet\n" .
+                    "2. Daftar akun baru\n" .
+                    "3. Masuk ke menu *Telegram*\n" .
+                    "4. Masukkan Telegram ID kamu: `{$chatId}`\n\n" .
+                    "Telegram ID kamu: *{$chatId}*\n\n" .
+                    "Ketik /start untuk info lebih lanjut."
             );
             $response->getBody()->write(json_encode(['ok' => true]));
             return $response->withHeader('Content-Type', 'application/json');
@@ -67,34 +68,40 @@ class TelegramController
         $parsed  = $parser->parse($text);
 
         if (empty($parsed)) {
-            $this->sendMessage($chatId, "❓ Format tidak dikenali.\n\n" .
-                "📌 Contoh transaksi:\n" .
-                "11/3\n" .
-                "makan siang 30 - bni\n" .
-                "gaji 5jt + bsi\n\n" .
-                "🔄 Format transfer:\n" .
-                "tf 50rb bni ke cash\n" .
-                "tf 50rb bni - cash\n" .
-                "tf 50rb bni cash\n" .
-                "tf 50rb bni ke cash 2500\n\n" .
-                "💡 Format nominal:\n" .
-                "30 → Rp 30.000\n" .
-                "30rb / 30k → Rp 30.000\n" .
-                "5jt → Rp 5.000.000\n" .
-                "500perak → Rp 500\n\n" .
-                "⌨️ Command:\n" .
-                "/saldo — cek semua saldo wallet\n" .
-                "/hari — transaksi hari ini\n" .
-                "/hari 26/3/2026 — transaksi tanggal tertentu"
+            $this->sendMessage(
+                $chatId,
+                "❓ Format tidak dikenali.\n\n" .
+                    "📌 Contoh transaksi:\n" .
+                    "11/3\n" .
+                    "makan siang 30 - bni\n" .
+                    "gaji 5jt + bsi\n" .
+                    "coffee 50 - bni #jajan\n\n" .
+                    "🔄 Format transfer:\n" .
+                    "tf 50rb bni ke cash\n" .
+                    "tf 50rb bni cash 2500\n\n" .
+                    "💡 Format nominal:\n" .
+                    "30 → Rp 30.000\n" .
+                    "30rb / 30k → Rp 30.000\n" .
+                    "5jt → Rp 5.000.000\n" .
+                    "500perak → Rp 500\n\n" .
+                    "⌨️ Command:\n" .
+                    "/saldo — cek semua saldo wallet\n" .
+                    "/hari — transaksi hari ini\n" .
+                    "/hari 26/3/2026 — transaksi tanggal tertentu\n" .
+                    "/help — panduan lengkap"
             );
-            
         } else {
             $reply = "✅ Transaksi tersimpan:\n\n";
             foreach ($parsed as $trx) {
                 // Kategorisasi
                 if ($trx['is_transfer']) {
-                    $categoryId = $this->getOrCreateTransferCategory($userId);
+                    $categoryId   = $this->getOrCreateTransferCategory($userId);
                     $categoryName = 'Transfer';
+                } elseif (!empty($trx['category_tag'])) {
+                    // Manual kategori via #tag
+                    $cat = $matcher->matchByTag($userId, $trx['category_tag']);
+                    $categoryId   = $cat['id'];
+                    $categoryName = $cat['name'];
                 } else {
                     $category     = $matcher->match($userId, $trx['description'], $trx['type']);
                     $categoryId   = $category['id'];
@@ -183,40 +190,58 @@ class TelegramController
 
         switch ($command) {
             case '/start':
-                $this->sendMessage($chatId,
+                $this->sendMessage(
+                    $chatId,
                     "👋 Halo! Selamat datang di *Cateeeet* 💸\n\n" .
-                    "Bot ini membantu kamu catat keuangan harian langsung dari Telegram.\n\n" .
-                    "Untuk mulai, kamu perlu:\n" .
-                    "1. Daftar akun di web\n" .
-                    "2. Hubungkan Telegram ID kamu di menu Telegram\n\n" .
-                    "Sudah punya akun? Langsung catat transaksi!\n\n" .
-                    "Contoh:\n" .
-                    "makan siang 30 - bni\n" .
-                    "gaji 5jt + bsi\n\n" .
-                    "Ketik /help untuk bantuan lebih lanjut."
+                        "Bot ini membantu kamu catat keuangan harian langsung dari Telegram.\n\n" .
+                        "Untuk mulai, kamu perlu:\n" .
+                        "1. Daftar akun di web\n" .
+                        "2. Hubungkan Telegram ID kamu di menu Telegram\n\n" .
+                        "Sudah punya akun? Langsung catat transaksi!\n\n" .
+                        "Contoh:\n" .
+                        "makan siang 30 - bni\n" .
+                        "gaji 5jt + bsi\n\n" .
+                        "Ketik /help untuk bantuan lebih lanjut."
                 );
                 break;
 
             case '/help':
-                $this->sendMessage($chatId,
-                    "📖 *Panduan Cateeeet*\n\n" .
-                    "💬 Format transaksi:\n" .
-                    "makan siang 30 - bni\n" .
-                    "gaji 5jt + bsi\n\n" .
-                    "🔄 Format transfer:\n" .
-                    "tf 50rb bni ke cash\n" .
-                    "tf 50rb bni cash 2500\n\n" .
-                    "💡 Format nominal:\n" .
-                    "30 → Rp 30.000\n" .
-                    "30rb / 30k → Rp 30.000\n" .
-                    "5jt → Rp 5.000.000\n\n" .
-                    "⌨️ Command:\n" .
-                    "/saldo — cek semua saldo wallet\n" .
-                    "/hari — transaksi hari ini\n" .
-                    "/hari 26/3/2026 — transaksi tanggal tertentu"
+                $this->sendMessage(
+                    $chatId,
+                    "📖 Panduan Cateeeet\n\n" .
+                        "💬 Format transaksi:\n" .
+                        "makan siang 30 - bni\n" .
+                        "gaji 5jt + bsi\n\n" .
+                        "🏷️ Kategori manual (#tag):\n" .
+                        "coffee 50 - bni #jajan\n" .
+                        "nasi padang 25 - cash #makan\n" .
+                        "→ Bot akan cocokkan #tag ke kategori kamu\n\n" .
+                        "👛 Nama wallet fleksibel:\n" .
+                        "bensin 50 - bni pol\n" .
+                        "→ 'bni pol' akan match ke 'BNI Polibatam'\n\n" .
+                        "🔄 Format transfer:\n" .
+                        "tf 50rb bni ke cash\n" .
+                        "tf 50rb bni - cash\n" .
+                        "tf 50rb bni cash\n" .
+                        "tf 50rb bni cash 2500  ← dengan biaya admin\n\n" .
+                        "📅 Format tanggal:\n" .
+                        "26/3\n" .
+                        "makan siang 30 - bni\n" .
+                        "→ Tanpa tanggal = hari ini\n\n" .
+                        "💡 Format nominal:\n" .
+                        "30 → Rp 30.000\n" .
+                        "30rb / 30k → Rp 30.000\n" .
+                        "5jt → Rp 5.000.000\n" .
+                        "500perak → Rp 500\n" .
+                        "30600 → Rp 30.600 (literal)\n\n" .
+                        "⌨️ Command:\n" .
+                        "/saldo — cek semua saldo wallet\n" .
+                        "/hari — transaksi hari ini\n" .
+                        "/hari 26/3/2026 — transaksi tanggal tertentu\n" .
+                        "/help — panduan ini"
                 );
                 break;
-            
+
             case '/saldo':
                 $this->sendMessage($chatId, $this->getSaldoText($userId));
                 break;
@@ -235,19 +260,24 @@ class TelegramController
                 break;
 
             default:
-                $this->sendMessage($chatId, "❓ Command tidak dikenal.\n\n" .
-                    "⌨️ Command yang tersedia:\n" .
-                    "/saldo — cek semua saldo wallet\n" .
-                    "/hari — transaksi hari ini\n" .
-                    "/hari 26/3/2026 — transaksi tanggal tertentu\n\n" .
-                    "💬 Format transaksi:\n" .
-                    "makan siang 30 - bni\n" .
-                    "gaji 5jt + bsi\n\n" .
-                    "🔄 Format transfer:\n" .
-                    "tf 50rb bni ke cash\n" .
-                    "tf 50rb bni cash 2500"
+                $this->sendMessage(
+                    $chatId,
+                    "❓ Command tidak dikenal.\n\n" .
+                        "⌨️ Command yang tersedia:\n" .
+                        "/start — info & panduan singkat\n" .
+                        "/help — panduan lengkap\n" .
+                        "/saldo — cek semua saldo wallet\n" .
+                        "/hari — transaksi hari ini\n" .
+                        "/hari 26/3/2026 — transaksi tanggal tertentu\n\n" .
+                        "💬 Format transaksi:\n" .
+                        "makan siang 30 - bni\n" .
+                        "gaji 5jt + bsi\n" .
+                        "coffee 50 - bni #jajan\n\n" .
+                        "🔄 Format transfer:\n" .
+                        "tf 50rb bni ke cash\n" .
+                        "tf 50rb bni cash 2500"
                 );
-            }
+        }
     }
 
     private function getSaldoText(int $userId): string
