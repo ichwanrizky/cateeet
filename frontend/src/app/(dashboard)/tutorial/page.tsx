@@ -252,6 +252,7 @@ export default function TutorialPage() {
               { cmd: "/start", desc: "Mulai bot & lihat panduan singkat" },
               { cmd: "/help", desc: "Panduan format transaksi lengkap" },
               { cmd: "/saldo", desc: "Lihat semua saldo wallet" },
+              { cmd: "/cat", desc: "Lihat daftar kategori milikmu" },
               { cmd: "/hari", desc: "Transaksi hari ini" },
               { cmd: "/hari 26/3/2026", desc: "Transaksi tanggal tertentu" },
             ].map((c) => (

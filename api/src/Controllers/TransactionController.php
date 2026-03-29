@@ -75,7 +75,7 @@ class TransactionController
         $total = (int) $stmt->get_result()->fetch_assoc()['total'];
 
         // Data
-        $sql = "SELECT t.id, t.description, t.amount, t.type, t.date, t.created_at, t.is_transfer,
+        $sql = "SELECT t.id, t.description, t.amount, t.type, t.date, t.created_at, t.is_transfer, t.is_balancing,
                     w.name as wallet_name,
                     c.name as category_name,
                     c.icon as category_icon,
@@ -101,6 +101,7 @@ class TransactionController
         while ($row = $result->fetch_assoc()) {
             $row['amount']      = (float) $row['amount'];
             $row['is_transfer'] = (bool)  $row['is_transfer'];
+            $row['is_balancing'] = (bool)  $row['is_balancing'];
             $transactions[]     = $row;
         }
 
@@ -130,6 +131,32 @@ class TransactionController
                         : null;
         $date        = $body['date'] ?? date('Y-m-d');
         $is_transfer = (int) ($body['is_transfer'] ?? 0);
+
+        if ($is_transfer && !$category_id) {
+            $catName = $type === 'in' ? 'Transfer Masuk' : 'Transfer Keluar';
+            $catIcon = $type === 'in' ? '📥' : '📤';
+            $catType = $type;
+
+            $stmt = $this->db->prepare("
+                SELECT id FROM categories 
+                WHERE user_id = ? AND LOWER(name) = LOWER(?) 
+                LIMIT 1
+            ");
+            $stmt->bind_param('is', $userId, $catName);
+            $stmt->execute();
+            $cat = $stmt->get_result()->fetch_assoc();
+
+            if ($cat) {
+                $category_id = (int) $cat['id'];
+            } else {
+                $stmt = $this->db->prepare("
+                    INSERT INTO categories (user_id, name, icon, type) VALUES (?, ?, ?, ?)
+                ");
+                $stmt->bind_param('isss', $userId, $catName, $catIcon, $catType);
+                $stmt->execute();
+                $category_id = $this->db->insert_id;
+            }
+        }
 
         if (!$description || !$amount || !in_array($type, ['in', 'out']) || !$wallet_id) {
             return Response::error($response, 'Data tidak lengkap.', 422);

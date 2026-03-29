@@ -71,32 +71,33 @@ class TelegramController
             $this->sendMessage(
                 $chatId,
                 "❓ Format tidak dikenali.\n\n" .
-                    "📌 Contoh transaksi:\n" .
-                    "11/3\n" .
-                    "makan siang 30 - bni\n" .
-                    "gaji 5jt + bsi\n" .
-                    "coffee 50 - bni #jajan\n\n" .
-                    "🔄 Format transfer:\n" .
-                    "tf 50rb bni ke cash\n" .
-                    "tf 50rb bni cash 2500\n\n" .
-                    "💡 Format nominal:\n" .
-                    "30 → Rp 30.000\n" .
-                    "30rb / 30k → Rp 30.000\n" .
-                    "5jt → Rp 5.000.000\n" .
-                    "500perak → Rp 500\n\n" .
-                    "⌨️ Command:\n" .
-                    "/saldo — cek semua saldo wallet\n" .
-                    "/hari — transaksi hari ini\n" .
-                    "/hari 26/3/2026 — transaksi tanggal tertentu\n" .
-                    "/help — panduan lengkap"
+                "📌 Contoh transaksi:\n" .
+                "11/3\n" .
+                "makan siang 30 - bni\n" .
+                "gaji 5jt + bsi\n" .
+                "coffee 50 - bni #jajan\n\n" .
+                "🔄 Format transfer:\n" .
+                "tf 50rb bni ke cash\n" .
+                "tf 50rb bni cash 2500\n\n" .
+                "💡 Format nominal:\n" .
+                "30 → Rp 30.000\n" .
+                "30rb / 30k → Rp 30.000\n" .
+                "5jt → Rp 5.000.000\n" .
+                "500perak → Rp 500\n\n" .
+                "⌨️ Command:\n" .
+                "/saldo — cek semua saldo wallet\n" .
+                "/hari — transaksi hari ini\n" .
+                "/hari 26/3/2026 — transaksi tanggal tertentu\n" .
+                "/cat — lihat daftar kategori\n" .
+                "/help — panduan lengkap"
             );
         } else {
             $reply = "✅ Transaksi tersimpan:\n\n";
             foreach ($parsed as $trx) {
                 // Kategorisasi
                 if ($trx['is_transfer']) {
-                    $categoryId   = $this->getOrCreateTransferCategory($userId);
-                    $categoryName = 'Transfer';
+                    $categoryId   = $this->getOrCreateTransferCategory($userId, $trx['type']);
+                    $categoryName = $trx['type'] === 'in' ? 'Transfer Masuk' : 'Transfer Keluar';
                 } elseif (!empty($trx['category_tag'])) {
                     // Manual kategori via #tag
                     $cat = $matcher->matchByTag($userId, $trx['category_tag']);
@@ -134,23 +135,26 @@ class TelegramController
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    private function getOrCreateTransferCategory(int $userId): int
+    private function getOrCreateTransferCategory(int $userId, string $type): int
     {
+        $name = $type === 'in' ? 'Transfer Masuk' : 'Transfer Keluar';
+        $icon = $type === 'in' ? '📥' : '📤';
+
         $stmt = $this->db->prepare("
             SELECT id FROM categories 
-            WHERE user_id = ? AND LOWER(name) = 'transfer' 
+            WHERE user_id = ? AND LOWER(name) = LOWER(?) 
             LIMIT 1
         ");
-        $stmt->bind_param('i', $userId);
+        $stmt->bind_param('is', $userId, $name);
         $stmt->execute();
         $cat = $stmt->get_result()->fetch_assoc();
 
         if ($cat) return (int) $cat['id'];
 
         $stmt = $this->db->prepare("
-            INSERT INTO categories (user_id, name, icon, type) VALUES (?, 'Transfer', '🔄', 'both')
+            INSERT INTO categories (user_id, name, icon, type) VALUES (?, ?, ?, ?)
         ");
-        $stmt->bind_param('i', $userId);
+        $stmt->bind_param('isss', $userId, $name, $icon, $type);
         $stmt->execute();
         return $this->db->insert_id;
     }
@@ -209,36 +213,38 @@ class TelegramController
                 $this->sendMessage(
                     $chatId,
                     "📖 Panduan Cateeeet\n\n" .
-                        "💬 Format transaksi:\n" .
-                        "makan siang 30 - bni\n" .
-                        "gaji 5jt + bsi\n\n" .
-                        "🏷️ Kategori manual (#tag):\n" .
-                        "coffee 50 - bni #jajan\n" .
-                        "nasi padang 25 - cash #makan\n" .
-                        "→ Bot akan cocokkan #tag ke kategori kamu\n\n" .
-                        "👛 Nama wallet fleksibel:\n" .
-                        "bensin 50 - bni pol\n" .
-                        "→ 'bni pol' akan match ke 'BNI Polibatam'\n\n" .
-                        "🔄 Format transfer:\n" .
-                        "tf 50rb bni ke cash\n" .
-                        "tf 50rb bni - cash\n" .
-                        "tf 50rb bni cash\n" .
-                        "tf 50rb bni cash 2500  ← dengan biaya admin\n\n" .
-                        "📅 Format tanggal:\n" .
-                        "26/3\n" .
-                        "makan siang 30 - bni\n" .
-                        "→ Tanpa tanggal = hari ini\n\n" .
-                        "💡 Format nominal:\n" .
-                        "30 → Rp 30.000\n" .
-                        "30rb / 30k → Rp 30.000\n" .
-                        "5jt → Rp 5.000.000\n" .
-                        "500perak → Rp 500\n" .
-                        "30600 → Rp 30.600 (literal)\n\n" .
-                        "⌨️ Command:\n" .
-                        "/saldo — cek semua saldo wallet\n" .
-                        "/hari — transaksi hari ini\n" .
-                        "/hari 26/3/2026 — transaksi tanggal tertentu\n" .
-                        "/help — panduan ini"
+                    "💬 Format transaksi:\n" .
+                    "makan siang 30 - bni\n" .
+                    "gaji 5jt + bsi\n\n" .
+                    "🏷️ Kategori manual (#tag):\n" .
+                    "coffee 50 - bni #jajan\n" .
+                    "bonus skynet 500rb + bni #gaji skynet\n" .
+                    "→ Bot cocokkan #tag ke kategori kamu\n" .
+                    "→ Lihat daftar kategori dengan /cat\n\n" .
+                    "👛 Nama wallet fleksibel:\n" .
+                    "bensin 50 - bni pol\n" .
+                    "→ 'bni pol' akan match ke 'BNI Polibatam'\n\n" .
+                    "🔄 Format transfer:\n" .
+                    "tf 50rb bni ke cash\n" .
+                    "tf 50rb bni - cash\n" .
+                    "tf 50rb bni cash\n" .
+                    "tf 50rb bni cash 2500  ← dengan biaya admin\n\n" .
+                    "📅 Format tanggal:\n" .
+                    "26/3\n" .
+                    "makan siang 30 - bni\n" .
+                    "→ Tanpa tanggal = hari ini\n\n" .
+                    "💡 Format nominal:\n" .
+                    "30 → Rp 30.000\n" .
+                    "30rb / 30k → Rp 30.000\n" .
+                    "5jt → Rp 5.000.000\n" .
+                    "500perak → Rp 500\n" .
+                    "30600 → Rp 30.600 (literal)\n\n" .
+                    "⌨️ Command:\n" .
+                    "/saldo — cek semua saldo wallet\n" .
+                    "/hari — transaksi hari ini\n" .
+                    "/hari 26/3/2026 — transaksi tanggal tertentu\n" .
+                    "/cat — lihat daftar kategori\n" .
+                    "/help — panduan ini"
                 );
                 break;
 
@@ -259,23 +265,28 @@ class TelegramController
                 $this->sendMessage($chatId, $this->getTransaksiHariText($userId, $date));
                 break;
 
+            case '/cat':
+                $this->sendMessage($chatId, $this->getCategoriesText($userId));
+                break;
+
             default:
                 $this->sendMessage(
                     $chatId,
                     "❓ Command tidak dikenal.\n\n" .
-                        "⌨️ Command yang tersedia:\n" .
-                        "/start — info & panduan singkat\n" .
-                        "/help — panduan lengkap\n" .
-                        "/saldo — cek semua saldo wallet\n" .
-                        "/hari — transaksi hari ini\n" .
-                        "/hari 26/3/2026 — transaksi tanggal tertentu\n\n" .
-                        "💬 Format transaksi:\n" .
-                        "makan siang 30 - bni\n" .
-                        "gaji 5jt + bsi\n" .
-                        "coffee 50 - bni #jajan\n\n" .
-                        "🔄 Format transfer:\n" .
-                        "tf 50rb bni ke cash\n" .
-                        "tf 50rb bni cash 2500"
+                    "⌨️ Command yang tersedia:\n" .
+                    "/start — info & panduan singkat\n" .
+                    "/help — panduan lengkap\n" .
+                    "/saldo — cek semua saldo wallet\n" .
+                    "/hari — transaksi hari ini\n" .
+                    "/hari 26/3/2026 — transaksi tanggal tertentu\n" .
+                    "/cat — lihat daftar kategori\n\n" .
+                    "💬 Format transaksi:\n" .
+                    "makan siang 30 - bni\n" .
+                    "gaji 5jt + bsi\n" .
+                    "coffee 50 - bni #jajan\n\n" .
+                    "🔄 Format transfer:\n" .
+                    "tf 50rb bni ke cash\n" .
+                    "tf 50rb bni cash 2500"
                 );
         }
     }
@@ -384,5 +395,63 @@ class TelegramController
             return sprintf('%s-%02d-%02d', $m[3], $m[2], $m[1]);
         }
         return null;
+    }
+
+    private function getCategoriesText(int $userId): string
+    {
+        $stmt = $this->db->prepare("
+            SELECT name, icon, type
+            FROM categories
+            WHERE user_id = ?
+            ORDER BY 
+                CASE type 
+                    WHEN 'in'   THEN 1 
+                    WHEN 'out'  THEN 2 
+                    WHEN 'both' THEN 3 
+                END,
+                name ASC
+        ");
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $in   = [];
+        $out  = [];
+        $both = [];
+
+        while ($row = $result->fetch_assoc()) {
+            $line = "{$row['icon']} {$row['name']}";
+            if ($row['type'] === 'in')        $in[]   = $line;
+            elseif ($row['type'] === 'out')   $out[]  = $line;
+            else                              $both[] = $line;
+        }
+
+        if (empty($in) && empty($out) && empty($both)) {
+            return "📂 Kamu belum punya kategori.\n\nTambahkan kategori di menu Kategori pada aplikasi web.";
+        }
+
+        $text = "📂 Daftar Kategori\n";
+        $text .= str_repeat("─", 20) . "\n";
+
+        if (!empty($in)) {
+            $text .= "\n💰 Pemasukan:\n";
+            foreach ($in as $line) $text .= "  {$line}\n";
+        }
+
+        if (!empty($out)) {
+            $text .= "\n💸 Pengeluaran:\n";
+            foreach ($out as $line) $text .= "  {$line}\n";
+        }
+
+        if (!empty($both)) {
+            $text .= "\n🔄 Keduanya:\n";
+            foreach ($both as $line) $text .= "  {$line}\n";
+        }
+
+        $text .= "\n" . str_repeat("─", 20) . "\n";
+        $text .= "💡 Gunakan #nama_kategori saat catat transaksi\n";
+        $text .= "Contoh: coffee 50 - bni #jajan";
+
+        return $text;
     }
 }

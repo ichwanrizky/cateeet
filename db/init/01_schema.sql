@@ -1,5 +1,5 @@
 -- ============================================================
---  Money Tracker — MySQL DDL
+--  Cateeeet — MySQL DDL
 --  File ini otomatis dijalankan saat container db pertama kali up
 -- ============================================================
 
@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     username       VARCHAR(50)     NOT NULL UNIQUE,
     password_hash  VARCHAR(255)    NOT NULL,
     display_name   VARCHAR(100)    NOT NULL,
+    email          VARCHAR(255)    NULL,
     telegram_id    BIGINT UNSIGNED NULL UNIQUE COMMENT 'Telegram chat_id untuk webhook bot',
     created_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
@@ -37,11 +38,12 @@ CREATE TABLE IF NOT EXISTS family_members (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS categories (
-    id               INT UNSIGNED    NOT NULL AUTO_INCREMENT,
-    user_id          INT UNSIGNED    NOT NULL,
-    name             VARCHAR(100)    NOT NULL,
-    icon             VARCHAR(10)     NULL,
-    shared_to_family TINYINT(1)      NOT NULL DEFAULT 0,
+    id               INT UNSIGNED              NOT NULL AUTO_INCREMENT,
+    user_id          INT UNSIGNED              NOT NULL,
+    name             VARCHAR(100)              NOT NULL,
+    icon             VARCHAR(10)               NULL,
+    type             ENUM('in','out')          NOT NULL DEFAULT 'out',
+    shared_to_family TINYINT(1)               NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     CONSTRAINT fk_cat_user FOREIGN KEY (user_id) REFERENCES users (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -59,16 +61,18 @@ CREATE TABLE IF NOT EXISTS wallets (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS transactions (
-    id          INT UNSIGNED        NOT NULL AUTO_INCREMENT,
-    user_id     INT UNSIGNED        NOT NULL,
-    wallet_id   INT UNSIGNED        NOT NULL,
-    category_id INT UNSIGNED        NULL,
-    description VARCHAR(255)        NOT NULL,
-    amount      DECIMAL(15,2)       NOT NULL,
-    type        ENUM('in','out')    NOT NULL,
-    date        DATE                NOT NULL,
-    raw_text    VARCHAR(500)        NULL,
-    created_at  TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id            INT UNSIGNED        NOT NULL AUTO_INCREMENT,
+    user_id       INT UNSIGNED        NOT NULL,
+    wallet_id     INT UNSIGNED        NOT NULL,
+    category_id   INT UNSIGNED        NULL,
+    description   VARCHAR(255)        NOT NULL,
+    amount        DECIMAL(15,2)       NOT NULL,
+    type          ENUM('in','out')    NOT NULL,
+    date          DATE                NOT NULL,
+    raw_text      VARCHAR(500)        NULL,
+    is_transfer   TINYINT(1)          NOT NULL DEFAULT 0,
+    is_balancing  TINYINT(1)          NOT NULL DEFAULT 0,
+    created_at    TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     CONSTRAINT fk_trx_user     FOREIGN KEY (user_id)     REFERENCES users (id),
     CONSTRAINT fk_trx_wallet   FOREIGN KEY (wallet_id)   REFERENCES wallets (id),

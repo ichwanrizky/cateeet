@@ -64,6 +64,11 @@ class AuthController
         $stmt->bind_param('ssss', $username, $password_hash, $display_name, $email);
         $stmt->execute();
 
+        $newUserId = $this->db->insert_id;
+
+        // Seed kategori default
+        $this->seedDefaultCategories($newUserId);
+
         $userId = $this->db->insert_id;
 
         return Response::success($response, [
@@ -255,6 +260,43 @@ class AuthController
         $stmt->execute();
 
         return Response::message($response, 'Password berhasil diupdate.');
+    }
+
+    private function seedDefaultCategories(int $userId): void
+    {
+        $categories = [
+            // Pemasukan
+            ['Gaji',            '💼', 'in'],
+            ['Bonus',           '🎁', 'in'],
+            ['Freelance',       '💻', 'in'],
+            ['Transfer Masuk',  '📥', 'in'],
+            ['Investasi Balik', '📈', 'in'],
+
+            // Pengeluaran
+            ['Makan & Minum',   '🍽️', 'out'],
+            ['Transport',       '🚗', 'out'],
+            ['Belanja',         '🛍️', 'out'],
+            ['Tagihan',         '💡', 'out'],
+            ['Kesehatan',       '💊', 'out'],
+            ['Pendidikan',      '📚', 'out'],
+            ['Hiburan',         '🎮', 'out'],
+            ['Perawatan',       '💆', 'out'],
+            ['Rumah',           '🏠', 'out'],
+            ['Investasi',       '📊', 'out'],
+            ['Tabungan',        '🏦', 'out'],
+            ['Transfer Keluar', '📤', 'out'],
+            ['Transfer',        '🔄', 'out'],
+            ['Lainnya',         '🗂️', 'out'],
+        ];
+
+        $stmt = $this->db->prepare("
+            INSERT INTO categories (user_id, name, icon, type) VALUES (?, ?, ?, ?)
+        ");
+
+        foreach ($categories as [$name, $icon, $type]) {
+            $stmt->bind_param('isss', $userId, $name, $icon, $type);
+            $stmt->execute();
+        }
     }
     
 }

@@ -46,6 +46,7 @@ type Transaction = {
   category_icon: string;
   input_by: string;
   is_transfer: boolean;
+  is_balancing: boolean;
 };
 
 const LIMIT = 20;
@@ -315,7 +316,9 @@ export default function TransactionsPage() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {trx.category_icon} {trx.category_name}
+                          {trx.is_balancing
+                            ? "⚖️ Balancing"
+                            : `${trx.category_icon} ${trx.category_name}`}
                         </span>
                       </TableCell>
                       <TableCell className="text-sm">
@@ -343,7 +346,7 @@ export default function TransactionsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            disabled={trx.is_transfer}
+                            disabled={trx.is_transfer || trx.is_balancing}
                             onClick={() => {
                               setEditTransaction(trx);
                               setFormOpen(true);
