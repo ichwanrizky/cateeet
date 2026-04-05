@@ -287,7 +287,7 @@ class TelegramController
                     "🔄 Format transfer:\n" .
                     "tf 50rb bni ke cash\n" .
                     "tf 50rb bni - cash\n" .
-                    "tf 50rb bni ke cash 2500  ← dengan biaya admin\n\n" .
+                    "tf 50rb bni ke cash 2500  ← dengan biaya admin\n\n"
                 );
         }
     }
